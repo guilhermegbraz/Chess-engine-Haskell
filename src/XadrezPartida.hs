@@ -110,7 +110,6 @@ capturaPropriaPeca tabuleiro (x0, y0) (xf, yf) =
         --Nothing -> False
         _ -> False
 
-
 movimentoForaTabuleiro :: Tabuleiro -> Posicao -> Posicao -> Bool
 movimentoForaTabuleiro tabuleiro (x0, y0) (xf, yf) =
     case pegaPeca tabuleiro (x0, y0) of
