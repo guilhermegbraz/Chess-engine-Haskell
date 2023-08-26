@@ -80,11 +80,30 @@ isMovimentoPeaoValido tabuleiro (x0, y0) (xf, yf) =
 checkDescoberto :: Bool
 checkDescoberto = False
 
-capturaPropriaPeca :: Bool
-capturaPropriaPeca = False
+capturaPropriaPeca :: Tabuleiro -> Posicao -> Posicao -> Bool
+capturaPropriaPeca tabuleiro (x0, y0) (xf, yf) =
+    case (pegaPeca tabuleiro (x0, y0), pegaPeca tabuleiro (xf, yf)) of
+        (Just peca, Just pecaDestino) -> 
+            let corPeca = getCor peca
+                corPecaDestino = getCor pecaDestino
+            in corPeca == corPecaDestino
+                --if corPeca == corPecaCasa 
+                --    then True
+                --else 
+                --    False
+        --Nothing -> False
+        _ -> False
 
-movimentoForaTabuleiro :: Bool
-movimentoForaTabuleiro = False
+
+movimentoForaTabuleiro :: Tabuleiro -> Posicao -> Posicao -> Bool
+movimentoForaTabuleiro tabuleiro (x0, y0) (xf, yf) =
+    case pegaPeca tabuleiro (x0, y0) of
+        Just peca ->
+                    if xf > 7 || xf < 0 || yf > 7 || yf < 0 
+                        then True
+                    else
+                        False
+        Nothing -> False
 
 -- isReiEmCheck :: Tabuleiro -> Cor -> Bool
 
