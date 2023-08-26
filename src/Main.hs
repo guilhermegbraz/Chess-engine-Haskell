@@ -13,6 +13,7 @@ main = do
   putStrLn "hello world, Jogo xadrez\n"
   let jogo = iniciaJogo 
   print(jogo)
+<<<<<<< HEAD
   -- print $ pegaPeca (getTabuleiro jogo) $ parserPosicao (0,0)
   print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(0,1)) (parserPosicao(0,1))
   print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(0,1)) (parserPosicao(0,2))
@@ -33,4 +34,9 @@ main = do
   print $ capturaPropriaPeca (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(6,1))
   print $ capturaPropriaPeca (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(6,3))
   print $ capturaPropriaPeca (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(3,5))
+=======
+  -- print $ pegaPeca (getTabuleiro jogo) $ parserPosicao  (0,0)
+  print $ isReiInCheck jogo Branco
+ 
+>>>>>>> 3c54b0d (testes)
 
