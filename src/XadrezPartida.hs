@@ -3,7 +3,7 @@ module XadrezPartida where
 import XadrezElementos
 
 iniciaJogo :: Jogo
-iniciaJogo = Jogo Branco tabuleiroInicial
+iniciaJogo = Jogo Branco tabuleiroInicial PrimeiroMovimento
 
 tabuleiroInicial :: Tabuleiro
 tabuleiroInicial = [
@@ -11,11 +11,11 @@ tabuleiroInicial = [
         ,[Ocupada (Peca Peao Preto) (x,6) | x <- [0..7]]
     ] 
     ++
-    reverse [[Empty (x,y) | y <- [0..7]] |  x <- [2..5]]
+    reverse [[Empty (x,y) | x <- [0..7]] |  y <- [2..5]]
     ++
     [
         [Ocupada (Peca Peao Branco) (x,1) | x <- [0..7]]
-        ,[Ocupada ((map (criaPecas Branco) [Torre, Cavalo, Bispo, Rainha, Rei, Bispo, Cavalo, Torre]) !! x ) (x,7)| x <- [0..7]]
+        ,[Ocupada ((map (criaPecas Branco) [Torre, Cavalo, Bispo, Rainha, Rei, Bispo, Cavalo, Torre]) !! x ) (x,0)| x <- [0..7]]
     ]
     
     where
@@ -27,20 +27,70 @@ pegaPeca tabuleiro (x, y)
         | x >= 0 && x <= 7 && y >= 0 && y <= 7 = getPecaCasa ((tabuleiro !! y) !! x)
         | otherwise = Nothing
 
+encontrarPosicaoRei :: Tabuleiro -> Cor -> Posicao
+encontrarPosicaoRei tabuleiro corRei = head $ filter encontraRei [(x,y) | y <- [0..7], x <- [0..7]]
+        where
+            encontraRei pos = case pegaPeca tabuleiro pos of 
+                Just (Peca Rei cor) -> cor == corRei
+                _ -> False
+
+
 caminhoLivre :: Tabuleiro -> Posicao -> Posicao -> Bool
-caminhoLivre tabuleiro posI posF  = all isCasaVazia $ gerarCaminho posI posF
+caminhoLivre tabuleiro posI posF  = verificaVazia $ gerarCaminho posI posF
     where
+        verificaVazia xs = all isCasaVazia xs
+        verificaVazia [] = True
         isCasaVazia (x, y) = case pegaPeca tabuleiro (x, y) of
             Just _ -> False
             Nothing -> True
 
 gerarCaminho :: Posicao -> Posicao -> [Posicao]
-gerarCaminho (x1, y1) (x2, y2) = filter desconsideraOrigemFim caminho 
+gerarCaminho (x1, y1) (x2, y2) =  removeExtremos $ zip [x1 + stepX, x1 + 2*stepX .. x2] [y1 + stepY, y1 + 2*stepY .. y2]
     where
-      caminho = [(x, y) | x <- [min x1 x2 .. max x1 x2], y <- [min y1 y2 .. max y1 y2]]
-      desconsideraOrigemFim = \(x, y) -> (x,y) /= (x1, y1) && (x, y) /= (x2, y2)
+        deltaX = abs (x2 - x1)
+        deltaY = abs (y2 - y1)
+        stepX = if x2 > x1 then 1 else -1
+        stepY = if y2 > y1 then 1 else -1
+        removeExtremos [] = []
+        removeExtremos xs = tail $ reverse xs
+
+todasPosicoesAdversarios :: Tabuleiro -> Cor -> [Posicao]
+todasPosicoesAdversarios tabuleiro corRei = filter pecasAdversarias [(x,y) | y <- [0..7], x <- [0..7]]
+    where
+        pecasAdversarias pos = case pegaPeca tabuleiro pos of
+            Just (Peca _ corAdversario) -> corAdversario /= corRei
+            Nothing -> False
 
 
+isReiInCheck :: Jogo -> Cor -> Bool
+isReiInCheck jogo corRei = any (\pos -> getBoolRetorno(movimentoValidoPeca jogo pos posRei)) posicoesAdversarios
+    where
+        posicoesAdversarios = todasPosicoesAdversarios (getTabuleiro jogo) corRei
+        posRei = encontrarPosicaoRei (getTabuleiro jogo) corRei
+
+jogada:: Jogo -> Posicao -> Posicao -> Jogo
+jogada jogo posI posF = if retornoBool 
+    then Jogo (trocarTurno (getTurno jogo)) (realizarMovimento jogo posI posF) retornoResultado
+    else Jogo (getTurno jogo) (getTabuleiro jogo) retornoResultado
+    where
+        (Retorno retornoBool retornoResultado) = isMovimentoValido jogo posI posF
+
+
+realizarMovimento :: Jogo -> Posicao -> Posicao -> Tabuleiro
+realizarMovimento jogo@(Jogo turno tabuleiro _) (x0, y0) (xf, yf) =
+    case pegaPeca tabuleiro (x0, y0) of
+        Just peca -> atualizarTabuleiro tabuleiro (x0, y0) (Empty (x0, 7-y0)) (xf, yf) (Ocupada peca (xf, 7-yf))
+        Nothing -> getTabuleiro jogo
+
+atualizarTabuleiro :: Tabuleiro -> Posicao -> Casa -> Posicao -> Casa -> Tabuleiro
+atualizarTabuleiro tabuleiro posI casaI posF casaF =
+    [[if (x, y) == posI then casaI else if (x, y) == posF then casaF else tabuleiro !! y !! x | x <- [0..7]] | y <- [0..7]]
+
+trocarTurno :: Cor -> Cor
+trocarTurno Branco = Preto
+trocarTurno Preto = Branco
+
+------------------ VALIDAÇÕES ---------------------------------------------
 isMovimentoBispoValido :: Posicao -> Posicao -> Bool
 isMovimentoBispoValido (x0, y0) (xf, yf) = abs (xf - x0) == abs (yf - y0) 
 
@@ -69,16 +119,72 @@ isMovimentoPeaoValido tabuleiro (x0, y0) (xf, yf) =
             in case corPeca of
                 Branco ->
                     if y0 == 6
-                        then (y0 - yf == 1 || y0 - yf == 2) && (x0 - xf) == 0
-                        else y0 - yf == 1 && (x0 - xf) == 0
+                        then ((y0 - yf == 1 || y0 - yf == 2) && (x0 - xf) == 0) || movPeaoCaptura Branco
+                        else (y0 - yf == 1 && (x0 - xf) == 0) || movPeaoCaptura Branco
                 Preto ->
                     if y0 == 1
-                        then yf - y0 == 1 || yf - y0 == 2 && (x0 - xf) == 0
-                        else yf - y0 == 1 && (x0 - xf) == 0
+                        then (yf - y0 == 1 || yf - y0 == 2 && (x0 - xf) == 0) || movPeaoCaptura Preto
+                        else (yf - y0 == 1 && (x0 - xf) == 0) || movPeaoCaptura Preto
+                where
+                    movPeaoCaptura Branco = (y0 - yf == 1) && (abs(x0 - xf) == 1) && pecaOutraCor Branco
+                    movPeaoCaptura Preto = (yf - y0 == 1) && (abs(x0 - xf) == 1) && pecaOutraCor Preto
+                    pecaOutraCor cor = case pegaPeca tabuleiro (xf, yf) of
+                        Just (Peca t corPeca) -> cor /= corPeca
+                        Nothing -> False
+                        
         Nothing -> False
 
-checkDescoberto :: Bool
-checkDescoberto = False
+
+-- movimentoValidoPeca :: Jogo -> Posicao -> Posicao -> Bool
+-- movimentoValidoPeca jogo posI posF = 
+--     case pegaPeca(getTabuleiro jogo) posI of
+--        Nothing -> False
+--        Just (Peca Bispo _) ->    isMovimentoBispoValido posI posF && caminhoLivre (getTabuleiro jogo) posI posF
+--        Just (Peca Cavalo _) ->   isMovimentoCavaloValido posI posF
+--        Just (Peca Rei _) ->      isMovimentoReiValido posI posF && caminhoLivre (getTabuleiro jogo) posI posF
+--        Just (Peca Torre _) ->    isMovimentoTorreValido posI posF && caminhoLivre (getTabuleiro jogo) posI posF
+--        Just (Peca Rainha _) ->   isMovimentoRainhaValido posI posF && caminhoLivre (getTabuleiro jogo) posI posF
+--        Just (Peca Peao _) ->     isMovimentoPeaoValido (getTabuleiro jogo) posI posF  && caminhoLivre (getTabuleiro jogo) posI posF
+
+movimentoValidoPeca :: Jogo -> Posicao -> Posicao -> Retorno
+movimentoValidoPeca jogo posI posF = 
+    case pegaPeca(getTabuleiro jogo) posI of
+       Nothing -> Retorno False PecaNaoEncontrada
+       Just (Peca Bispo _) ->    
+           if isMovimentoBispoValido posI posF
+               then if caminhoLivre (getTabuleiro jogo) posI posF
+                        then Retorno True MovimentoValido
+                        else Retorno False CaminhoBarrado
+               else Retorno False MovimentoInvalidoPeca
+       Just (Peca Cavalo _) ->   
+           if isMovimentoCavaloValido posI posF
+               then Retorno True MovimentoValido
+               else Retorno False MovimentoInvalidoPeca
+       Just (Peca Rei _) ->      
+           if isMovimentoReiValido posI posF
+               then if caminhoLivre (getTabuleiro jogo) posI posF
+                        then Retorno True MovimentoValido
+                        else Retorno False CaminhoBarrado
+               else Retorno False MovimentoInvalidoPeca
+       Just (Peca Torre _) ->    
+           if isMovimentoTorreValido posI posF
+               then if caminhoLivre (getTabuleiro jogo) posI posF
+                        then Retorno True MovimentoValido
+                        else Retorno False CaminhoBarrado
+               else Retorno False MovimentoInvalidoPeca
+       Just (Peca Rainha _) ->   
+           if isMovimentoRainhaValido posI posF
+               then if caminhoLivre (getTabuleiro jogo) posI posF
+                        then Retorno True MovimentoValido
+                        else Retorno False CaminhoBarrado
+               else Retorno False MovimentoInvalidoPeca
+       Just (Peca Peao _) ->     
+           if isMovimentoPeaoValido (getTabuleiro jogo) posI posF
+               then if caminhoLivre (getTabuleiro jogo) posI posF
+                        then Retorno True MovimentoValido
+                        else Retorno False CaminhoBarrado
+               else Retorno False MovimentoInvalidoPeca
+
 
 capturaPropriaPeca :: Tabuleiro -> Posicao -> Posicao -> Bool
 capturaPropriaPeca tabuleiro (x0, y0) (xf, yf) =
@@ -94,7 +200,6 @@ capturaPropriaPeca tabuleiro (x0, y0) (xf, yf) =
         --Nothing -> False
         _ -> False
 
-
 movimentoForaTabuleiro :: Tabuleiro -> Posicao -> Posicao -> Bool
 movimentoForaTabuleiro tabuleiro (x0, y0) (xf, yf) =
     case pegaPeca tabuleiro (x0, y0) of
@@ -105,6 +210,42 @@ movimentoForaTabuleiro tabuleiro (x0, y0) (xf, yf) =
                         False
         Nothing -> False
 
+
+
+isTurnoCorreto :: Jogo -> Posicao -> Posicao -> Bool
+isTurnoCorreto jogo posI posF = 
+    case pegaPeca (getTabuleiro jogo) posI of
+        Just (Peca tipo corPeca) -> corPeca == getTurno jogo
+        _ -> False
+
+isMovimentoSeguro :: Jogo -> Posicao -> Posicao -> Bool
+isMovimentoSeguro jogo posInicial posFinal =
+    let tabuleiroAposMovimento = realizarMovimento jogo posInicial posFinal
+    in not (isReiInCheck (Jogo (getTurno jogo) tabuleiroAposMovimento (getResultadoUltimaJogada jogo) ) (getTurno jogo))
+
+
+isMovimentoValido :: Jogo -> Posicao -> Posicao -> Retorno
+isMovimentoValido jogo posI posF = 
+    vTurno <>  
+    vForaTabuleiro <>
+    vCapturaProprioTime <>
+    movimentoValidoPeca jogo posI posF <>
+    vSeguro
+    where
+        vTurno = if (isTurnoCorreto jogo posI posF)
+            then Retorno True MovimentoValido
+            else Retorno False MovimentoForaTurno
+        vForaTabuleiro = if(not (movimentoForaTabuleiro (getTabuleiro jogo) posI posF))
+            then Retorno True MovimentoValido
+            else Retorno False MovimentoForaTabuleiro
+        vCapturaProprioTime = if (not (capturaPropriaPeca (getTabuleiro jogo) posI posF))
+            then Retorno True MovimentoValido
+            else Retorno False ProprioTime
+        vSeguro = if (isMovimentoSeguro jogo posI posF)
+            then Retorno True MovimentoValido
+            else Retorno False ProprioReiCheck
+            
+--func/identificar_fim_jogo
 
 isReiAfogado :: Jogo -> Bool
 isReiAfogado jogo =
@@ -125,25 +266,6 @@ isCheckMate jogo =
 
 
 
--- isReiEmCheck :: Tabuleiro -> Cor -> Bool
 
--- isReiInCheck :: Tabuleiro -> Cor -> Bool
--- isReiInCheck tabuleiro corRei =
---     let posRei = encontrarPosicaoRei tabuleiro corRei
---     in any (\posAdversario -> isMovimentoValido tabuleiro posAdversario posRei) posicoesAdversarios
---     where
---         posicoesAdversarios = todasPosicoesAdversarios tabuleiro corRei
 
--- encontrarPosicaoRei :: Tabuleiro -> Cor -> Posicao
--- encontrarPosicaoRei tabuleiro corRei =
---     head [pos | y <- [0..7], x <- [0..7], Just (Peca Rei cor) <- [pegaPeca tabuleiro (x, y)], cor == corRei]
-
--- todasPosicoesAdversarios :: Tabuleiro -> Cor -> [Posicao]
--- todasPosicoesAdversarios tabuleiro corRei =
---     [pos | y <- [0..7], x <- [0..7], Just (Peca _ cor) <- [pegaPeca tabuleiro (x, y)], cor /= corRei]
-
--- para validar movimento, o movimento não pode:
--- 	dar check descoberto
--- 	comer peça da mesma cor
--- 	ir pra fora do tabuleiro
--- 	atropelar uma peça (exceto pelo cavalo)
+--func/loop_jogo

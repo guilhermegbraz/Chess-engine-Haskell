@@ -9,18 +9,24 @@ data Cor = Branco | Preto
 
 type Posicao = (Int, Int)
 
-data TipoMovimento = MovimentoValido | ProprioReiCheck | ProprioTime | CaminhoBarrado | MovimentoInvalidoPeca
+data ResultadoJogada = MovimentoValido | CapturaValida | ProprioReiCheck | ReiEmCheck | ProprioTime | CaminhoBarrado | MovimentoInvalidoPeca | MovimentoForaTurno | MovimentoForaTabuleiro | PecaNaoEncontrada | PrimeiroMovimento
 
-instance Show TipoMovimento where
-    show ProprioReiCheck = "Esse movimento coloca o seu Rei em Check"
-    show ProprioTime = "Esse movimento captura uma peça do seu proprio time"
-    show CaminhoBarrado = "Há uma peça bloqueando o caminho para esse movimento"
+instance Show ResultadoJogada where
+    show MovimentoValido  = "Movimento realizado"
+    show ProprioReiCheck = "Movimento Inválido. Esse movimento coloca o seu Rei em Check"
+    show ReiEmCheck = "Movimento Inválido. Seu rei esta em check, movimento o rei ou tome a peça que esta atacando-o"
+    show ProprioTime = "Movimento Inválido. Esse movimento captura uma peça do seu proprio time"
+    show CaminhoBarrado = "Movimento Inválido. Há uma peça bloqueando o caminho para esse movimento"
     show MovimentoInvalidoPeca = "Movimento invalido. Essa peça não se move dessa forma"
+    show MovimentoForaTurno = "Movimento invalido. Não é a sua vez de jogar"
+    show MovimentoForaTabuleiro = "Movimento invalido. Esse movimento ultrapassa os limites (fisicos) do tabuleiro"
+    show PecaNaoEncontrada = "Movimento invalido. Não há peça alguma na posição inicial passada"
+    show PrimeiroMovimento = "O jogo irá começar"
+
 
 -- ELEMENTOS JOGO ----------------------------
 
 -------- Peca
-
 data Peca =  Peca TipoPeca Cor
 
 instance Show Peca where
@@ -51,7 +57,7 @@ data Casa = Empty Posicao | Ocupada Peca Posicao
 instance Show Casa where
     show (Empty (x, y)) 
         | (x + y) `mod` 2 == 0 = " ■ " 
-        | otherwise = " □ " 
+        | otherwise = " □ "
     
     show (Ocupada peca pos) = show peca
 
@@ -65,23 +71,51 @@ type Tabuleiro = [[Casa]]
 
 showTabuleiro :: Tabuleiro -> String
 showTabuleiro tabuleiro =  "  0  1  2  3  4  5  6  7\n" ++ (unlines . map (concatMap show)) tabuleiro
-    --(show "0  1  2  3  4  5  6  7\n") ++ (unlines . map (concatMap show))
--- showTabuleiro tabuleiro = unlines $ colNumbers : separator : (zipWith (\i row -> show i ++ " |" ++ concatMap show row) [1..] tabLines)
---   where
---     colNumbers = "    " ++ concatMap (\i -> " " ++ show i ++ " ") [1..8]
---     separator = "   " ++ replicate 33 '-'
---     tabLines = map (\(i, row) -> show i ++ " |" ++ row) $ zip [8,7..1] (map (concatMap show) tabuleiro)
 
 -------- Jogo
-data Jogo = Jogo Cor Tabuleiro
+data Jogo = Jogo Cor Tabuleiro ResultadoJogada
+--ResultadoJogada
 
 getTurno :: Jogo -> Cor
-getTurno (Jogo turno tabuleiro) = turno
+getTurno (Jogo turno _ _) = turno
 
 getTabuleiro :: Jogo -> Tabuleiro
-getTabuleiro (Jogo turno tabuleiro) = tabuleiro
+getTabuleiro (Jogo _ tabuleiro _ ) = tabuleiro
+
+getResultadoUltimaJogada :: Jogo -> ResultadoJogada
+getResultadoUltimaJogada (Jogo _ _ resultado) = resultado
 
 instance Show Jogo where
-    show (Jogo Branco tabuleiro) = "Brancas jogam \n\n" ++ showTabuleiro tabuleiro
-    show (Jogo Preto tabuleiro) = "Pretas jogam \n\n" ++ showTabuleiro tabuleiro
+    show (Jogo Branco tabuleiro resultadoUltimaJogada) = "Brancas jogam \n\n" ++ showTabuleiro tabuleiro ++ "\n"  ++ show resultadoUltimaJogada ++ "\n" 
+    show (Jogo Preto tabuleiro resultadoUltimaJogada ) = "Pretas jogam \n\n" ++ showTabuleiro tabuleiro  ++ "\n"  ++ show resultadoUltimaJogada ++ "\n"
 
+data Retorno = Retorno Bool ResultadoJogada
+
+getResultadoJogada :: Retorno -> ResultadoJogada
+getResultadoJogada (Retorno b r) = r
+
+getBoolRetorno :: Retorno -> Bool
+getBoolRetorno (Retorno b r) = b 
+
+instance Semigroup Retorno where 
+    (Retorno bool _) <> (Retorno bool2 PecaNaoEncontrada) = Retorno False PecaNaoEncontrada
+    (Retorno bool PecaNaoEncontrada) <> (Retorno bool2 _) = Retorno False PecaNaoEncontrada
+    (Retorno bool MovimentoForaTurno) <> (Retorno bool2 _) = Retorno False MovimentoForaTurno
+    (Retorno bool _) <> (Retorno bool2 MovimentoForaTurno) = Retorno False MovimentoForaTurno
+    (Retorno bool MovimentoForaTabuleiro) <> (Retorno bool2 _) = Retorno False MovimentoForaTabuleiro
+    (Retorno bool _) <> (Retorno bool2 MovimentoForaTabuleiro) = Retorno False MovimentoForaTabuleiro
+    (Retorno bool ReiEmCheck) <> (Retorno bool2 _) = Retorno False ReiEmCheck
+    (Retorno bool _) <> (Retorno bool2 ReiEmCheck) = Retorno False ReiEmCheck
+    (Retorno bool ProprioReiCheck) <> (Retorno bool2 _) = Retorno False ProprioReiCheck
+    (Retorno bool _) <> (Retorno bool2 ProprioReiCheck) = Retorno False ProprioReiCheck
+    (Retorno bool _) <> (Retorno bool2 ProprioTime) = Retorno False ProprioTime
+    (Retorno bool ProprioTime) <> (Retorno bool2 _) = Retorno False ProprioTime
+    (Retorno bool _) <> (Retorno bool2 CaminhoBarrado) = Retorno False CaminhoBarrado
+    (Retorno bool CaminhoBarrado) <> (Retorno bool2 _) = Retorno False CaminhoBarrado
+    (Retorno bool _) <> (Retorno bool2 MovimentoInvalidoPeca) = Retorno False MovimentoInvalidoPeca
+    (Retorno bool MovimentoInvalidoPeca) <> (Retorno bool2 _) = Retorno False MovimentoInvalidoPeca
+    (Retorno True _) <> (Retorno True _) = Retorno True MovimentoValido
+
+instance Monoid Retorno where
+    mempty = Retorno True MovimentoValido
+    mappend = (<>)
