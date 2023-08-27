@@ -9,12 +9,13 @@ data Cor = Branco | Preto
 
 type Posicao = (Int, Int)
 
-data TipoMovimento = MovimentoValido | ProprioReiCheck | ProprioTime | CaminhoBarrado | MovimentoInvalidoPeca
+data ResultadoJogada = MovimentoValido | CapturaValida | MovimentoValido | ProprioReiCheck | ReiEmCheck | ProprioTime | CaminhoBarrado | MovimentoInvalidoPeca
 
 instance Show TipoMovimento where
-    show ProprioReiCheck = "Esse movimento coloca o seu Rei em Check"
-    show ProprioTime = "Esse movimento captura uma peça do seu proprio time"
-    show CaminhoBarrado = "Há uma peça bloqueando o caminho para esse movimento"
+    show ProprioReiCheck = "Movimento Inválido. Esse movimento coloca o seu Rei em Check"
+    show ReiEmCheck = "Movimento Inválido. Seu rei esta em check, movimento o rei ou tome a peça que esta atacando-o"
+    show ProprioTime = "Movimento Inválido. Esse movimento captura uma peça do seu proprio time"
+    show CaminhoBarrado = "Movimento Inválido. Há uma peça bloqueando o caminho para esse movimento"
     show MovimentoInvalidoPeca = "Movimento invalido. Essa peça não se move dessa forma"
 
 -- ELEMENTOS JOGO ----------------------------
@@ -51,7 +52,7 @@ data Casa = Empty Posicao | Ocupada Peca Posicao
 instance Show Casa where
     show (Empty (x, y)) 
         | (x + y) `mod` 2 == 0 = " ■ " 
-        | otherwise = " □ " 
+        | otherwise = " □ "
     
     show (Ocupada peca pos) = show peca
 
@@ -73,15 +74,18 @@ showTabuleiro tabuleiro =  "  0  1  2  3  4  5  6  7\n" ++ (unlines . map (conca
 --     tabLines = map (\(i, row) -> show i ++ " |" ++ row) $ zip [8,7..1] (map (concatMap show) tabuleiro)
 
 -------- Jogo
-data Jogo = Jogo Cor Tabuleiro
+data Jogo = Jogo Cor Tabuleiro ResultadoJogada
 
 getTurno :: Jogo -> Cor
-getTurno (Jogo turno tabuleiro) = turno
+getTurno (Jogo turno _ _) = turno
 
 getTabuleiro :: Jogo -> Tabuleiro
-getTabuleiro (Jogo turno tabuleiro) = tabuleiro
+getTabuleiro (Jogo _ tabuleiro _) = tabuleiro
+
+getResultadoUltimaJogada :: Jogo -> ResultadoJogada
+getResultadoUltimaJogada (Jogo _ _ resultado) = resultado
 
 instance Show Jogo where
-    show (Jogo Branco tabuleiro) = "Brancas jogam \n\n" ++ showTabuleiro tabuleiro
-    show (Jogo Preto tabuleiro) = "Pretas jogam \n\n" ++ showTabuleiro tabuleiro
+    show (Jogo Branco tabuleiro resultadoUltimaJogada) = "Brancas jogam \n\n" ++ showTabuleiro tabuleiro ++ "\n\n " ++ show resultadoUltimaJogada 
+    show (Jogo Preto tabuleiro) = "Pretas jogam \n\n" ++ showTabuleiro tabuleiro  ++ "\n\n " ++ show resultadoUltimaJogada
 
