@@ -25,7 +25,7 @@ main = do
   let novoJogo4 =jogada novoJogo3 (parserPosicao(1,7)) (parserPosicao(2,5))
   print(novoJogo4)
   -- -- print $ pegaPeca (getTabuleiro  jogo) $ parserPosicao (0,0)
-  -- print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(0,1)) (parserPosicao(0,1))
+  -- print $ isMovimentoPeaoValid o (getTabuleiro jogo) (parserPosicao(0,1)) (parserPosicao(0,1))
   -- print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(0,1)) (parserPosicao(0,2))
   -- print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(0,1)) (parserPosicao(0,3))
   -- print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(3,1)) (parserPosicao(0,2))

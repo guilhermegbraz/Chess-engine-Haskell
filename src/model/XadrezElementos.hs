@@ -9,14 +9,16 @@ data Cor = Branco | Preto
 
 type Posicao = (Int, Int)
 
-data ResultadoJogada = MovimentoValido | CapturaValida | MovimentoValido | ProprioReiCheck | ReiEmCheck | ProprioTime | CaminhoBarrado | MovimentoInvalidoPeca
+data ResultadoJogada = MovimentoValido | CapturaValida | ProprioReiCheck | ReiEmCheck | ProprioTime | CaminhoBarrado | MovimentoInvalidoPeca
 
-instance Show TipoMovimento where
+instance Show ResultadoJogada where
     show ProprioReiCheck = "Movimento Inválido. Esse movimento coloca o seu Rei em Check"
     show ReiEmCheck = "Movimento Inválido. Seu rei esta em check, movimento o rei ou tome a peça que esta atacando-o"
     show ProprioTime = "Movimento Inválido. Esse movimento captura uma peça do seu proprio time"
     show CaminhoBarrado = "Movimento Inválido. Há uma peça bloqueando o caminho para esse movimento"
     show MovimentoInvalidoPeca = "Movimento invalido. Essa peça não se move dessa forma"
+
+
 
 -- ELEMENTOS JOGO ----------------------------
 
@@ -74,18 +76,19 @@ showTabuleiro tabuleiro =  "  0  1  2  3  4  5  6  7\n" ++ (unlines . map (conca
 --     tabLines = map (\(i, row) -> show i ++ " |" ++ row) $ zip [8,7..1] (map (concatMap show) tabuleiro)
 
 -------- Jogo
-data Jogo = Jogo Cor Tabuleiro ResultadoJogada
+data Jogo = Jogo Cor Tabuleiro 
+--ResultadoJogada
 
 getTurno :: Jogo -> Cor
-getTurno (Jogo turno _ _) = turno
+getTurno (Jogo turno _ ) = turno
 
 getTabuleiro :: Jogo -> Tabuleiro
-getTabuleiro (Jogo _ tabuleiro _) = tabuleiro
+getTabuleiro (Jogo _ tabuleiro ) = tabuleiro
 
-getResultadoUltimaJogada :: Jogo -> ResultadoJogada
-getResultadoUltimaJogada (Jogo _ _ resultado) = resultado
+-- getResultadoUltimaJogada :: Jogo -> ResultadoJogada
+-- getResultadoUltimaJogada (Jogo _ _ resultado) = resultado
 
 instance Show Jogo where
-    show (Jogo Branco tabuleiro resultadoUltimaJogada) = "Brancas jogam \n\n" ++ showTabuleiro tabuleiro ++ "\n\n " ++ show resultadoUltimaJogada 
-    show (Jogo Preto tabuleiro) = "Pretas jogam \n\n" ++ showTabuleiro tabuleiro  ++ "\n\n " ++ show resultadoUltimaJogada
+    show (Jogo Branco tabuleiro ) = "Brancas jogam \n\n" ++ showTabuleiro tabuleiro ++ "\n\n " -- ++ show resultadoUltimaJogada 
+    show (Jogo Preto tabuleiro) = "Pretas jogam \n\n" ++ showTabuleiro tabuleiro  ++ "\n\n " -- ++ show resultadoUltimaJogada
 
