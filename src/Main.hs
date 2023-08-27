@@ -14,6 +14,13 @@ main = do
   let jogo = iniciaJogo 
   print(jogo)
   -- print $ pegaPeca (getTabuleiro jogo) $ parserPosicao (0,0)
+
+  let afogado = isReiAfogado (jogo)
+  print(afogado)
+
+  let check = isCheckMate (jogo)
+  print(check)
+  {-
   print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(0,1)) (parserPosicao(0,1))
   print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(0,1)) (parserPosicao(0,2))
   print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(0,1)) (parserPosicao(0,3))
@@ -33,4 +40,4 @@ main = do
   print $ capturaPropriaPeca (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(6,1))
   print $ capturaPropriaPeca (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(6,3))
   print $ capturaPropriaPeca (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(3,5))
-
+  -}

@@ -105,6 +105,26 @@ movimentoForaTabuleiro tabuleiro (x0, y0) (xf, yf) =
                         False
         Nothing -> False
 
+
+isReiAfogado :: Jogo -> Bool
+isReiAfogado jogo =
+    let corRei = getTurno jogo
+        posRei = encontrarPosicaoRei (getTabuleiro jogo) corRei
+        posicoesAoRedor = [(x + dx, y + dy) | dx <- [-1, 0, 1], dy <- [-1, 0, 1], (dx, dy) /= (0, 0)]
+        (x, y) = posRei
+    in all (\posFinal -> not (isMovimentoSeguro jogo posRei posFinal)) posicoesAoRedor
+
+isCheckMate :: Jogo -> Bool
+isCheckMate jogo =
+    let corRei = getTurno jogo
+        reiEmCheck = isReiInCheck jogo corRei
+        reifogado = isReiAfogado jogo
+    in reiEmCheck && reifogado
+
+
+
+
+
 -- isReiEmCheck :: Tabuleiro -> Cor -> Bool
 
 -- isReiInCheck :: Tabuleiro -> Cor -> Bool
