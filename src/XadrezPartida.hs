@@ -211,6 +211,7 @@ movimentoForaTabuleiro tabuleiro (x0, y0) (xf, yf) =
         Nothing -> False
 
 
+
 isTurnoCorreto :: Jogo -> Posicao -> Posicao -> Bool
 isTurnoCorreto jogo posI posF = 
     case pegaPeca (getTabuleiro jogo) posI of
@@ -243,3 +244,28 @@ isMovimentoValido jogo posI posF =
         vSeguro = if (isMovimentoSeguro jogo posI posF)
             then Retorno True MovimentoValido
             else Retorno False ProprioReiCheck
+            
+--func/identificar_fim_jogo
+
+isReiAfogado :: Jogo -> Bool
+isReiAfogado jogo =
+    let corRei = getTurno jogo
+        posRei = encontrarPosicaoRei (getTabuleiro jogo) corRei
+        posicoesAoRedor = [(x + dx, y + dy) | dx <- [-1, 0, 1], dy <- [-1, 0, 1], (dx, dy) /= (0, 0)]
+        (x, y) = posRei
+    in all (\posFinal -> not (isMovimentoSeguro jogo posRei posFinal)) posicoesAoRedor
+
+isCheckMate :: Jogo -> Bool
+isCheckMate jogo =
+    let corRei = getTurno jogo
+        reiEmCheck = isReiInCheck jogo corRei
+        reifogado = isReiAfogado jogo
+    in reiEmCheck && reifogado
+
+
+
+
+
+
+
+--func/loop_jogo

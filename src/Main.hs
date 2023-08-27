@@ -54,6 +54,37 @@ isEntradaInvalida (x0, y0) (xf, yf) = maximum [x0, y0, xf, yf] > 7 || minimum [x
 
 main :: IO ()
 main = do
+--   putStrLn "hello world, Jogo xadrez\n"
+--   let jogo = iniciaJogo 
+--   print(jogo)
+--   -- print $ pegaPeca (getTabuleiro jogo) $ parserPosicao (0,0)
+
+--   let afogado = isReiAfogado (jogo)
+--   print(afogado)
+
+--   let check = isCheckMate (jogo)
+--   print(check)
+  {-
+  print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(0,1)) (parserPosicao(0,1))
+  print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(0,1)) (parserPosicao(0,2))
+  print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(0,1)) (parserPosicao(0,3))
+  print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(3,1)) (parserPosicao(0,2))
+  print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(0,1)) (parserPosicao(0,0))
+  print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(3,3)) (parserPosicao(3,4))
+  print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(3,3)) (parserPosicao(3,5))
+  print $ (parserPosicao(3,3)) 
+  print $ (parserPosicao(3,4))
+  putStrLn "Teste fora do tabuleiro"
+  print $ movimentoForaTabuleiro (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(3,5))
+  print $ movimentoForaTabuleiro (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(3,9))
+  print $ movimentoForaTabuleiro (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(-2,5))
+  print $ movimentoForaTabuleiro (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(8,2))
+  putStrLn "Teste Captura Propria Peca"
+  print $ capturaPropriaPeca (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(1,1))
+  print $ capturaPropriaPeca (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(6,1))
+  print $ capturaPropriaPeca (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(6,3))
+  print $ capturaPropriaPeca (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(3,5))
+  -}
     hSetBuffering stdout NoBuffering
     putStrLn "Bem-vindo ao jogo de xadrez!"
     loop (iniciaJogo)
@@ -83,3 +114,4 @@ readPosition = do
     input <- getLine
     let [x, y] = words input
     return (read x, read y)
+
