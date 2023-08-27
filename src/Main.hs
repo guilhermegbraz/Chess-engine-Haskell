@@ -57,6 +57,11 @@ main = do
     hSetBuffering stdout NoBuffering
     putStrLn "Bem-vindo ao jogo de xadrez!"
     loop (iniciaJogo)
+    -- let jogo = iniciaJogo
+    -- print jogo
+    -- print $ gerarCaminho (parserPosicao (3,0)) (parserPosicao (0,3))
+    -- print $ parserPosicao (3,0)
+    -- print $ parserPosicao (0,3)
 
 loop :: Jogo -> IO ()
 loop jogo = do
