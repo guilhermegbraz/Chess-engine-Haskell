@@ -1,7 +1,6 @@
 module XadrezPartida where
 
 import XadrezElementos
-import Movimentacao
 
 iniciaJogo :: Jogo
 iniciaJogo = Jogo Branco tabuleiroInicial PrimeiroMovimento
