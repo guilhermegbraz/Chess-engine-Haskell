@@ -1,7 +1,6 @@
 module XadrezPartida where
 
 import XadrezElementos
-import Movimentacao
 
 iniciaJogo :: Jogo
 iniciaJogo = Jogo Branco tabuleiroInicial PrimeiroMovimento
@@ -37,18 +36,23 @@ encontrarPosicaoRei tabuleiro corRei = head $ filter encontraRei [(x,y) | y <- [
 
 
 caminhoLivre :: Tabuleiro -> Posicao -> Posicao -> Bool
-caminhoLivre tabuleiro posI posF  = all isCasaVazia $ gerarCaminho posI posF
+caminhoLivre tabuleiro posI posF  = verificaVazia $ gerarCaminho posI posF
     where
+        verificaVazia xs = all isCasaVazia xs
+        verificaVazia [] = True
         isCasaVazia (x, y) = case pegaPeca tabuleiro (x, y) of
             Just _ -> False
             Nothing -> True
 
 gerarCaminho :: Posicao -> Posicao -> [Posicao]
-gerarCaminho (x1, y1) (x2, y2) = filter desconsideraOrigemFim caminho 
+gerarCaminho (x1, y1) (x2, y2) =  removeExtremos $ zip [x1 + stepX, x1 + 2*stepX .. x2] [y1 + stepY, y1 + 2*stepY .. y2]
     where
-      caminho = [(x, y) | x <- [min x1 x2 .. max x1 x2], y <- [min y1 y2 .. max y1 y2]]
-      desconsideraOrigemFim = \(x, y) -> (x,y) /= (x1, y1) && (x, y) /= (x2, y2)
-
+        deltaX = abs (x2 - x1)
+        deltaY = abs (y2 - y1)
+        stepX = if x2 > x1 then 1 else -1
+        stepY = if y2 > y1 then 1 else -1
+        removeExtremos [] = []
+        removeExtremos xs = tail $ reverse xs
 
 todasPosicoesAdversarios :: Tabuleiro -> Cor -> [Posicao]
 todasPosicoesAdversarios tabuleiro corRei = filter pecasAdversarias [(x,y) | y <- [0..7], x <- [0..7]]
@@ -207,6 +211,7 @@ movimentoForaTabuleiro tabuleiro (x0, y0) (xf, yf) =
         Nothing -> False
 
 
+
 isTurnoCorreto :: Jogo -> Posicao -> Posicao -> Bool
 isTurnoCorreto jogo posI posF = 
     case pegaPeca (getTabuleiro jogo) posI of
@@ -239,3 +244,28 @@ isMovimentoValido jogo posI posF =
         vSeguro = if (isMovimentoSeguro jogo posI posF)
             then Retorno True MovimentoValido
             else Retorno False ProprioReiCheck
+            
+--func/identificar_fim_jogo
+
+isReiAfogado :: Jogo -> Bool
+isReiAfogado jogo =
+    let corRei = getTurno jogo
+        posRei = encontrarPosicaoRei (getTabuleiro jogo) corRei
+        posicoesAoRedor = [(x + dx, y + dy) | dx <- [-1, 0, 1], dy <- [-1, 0, 1], (dx, dy) /= (0, 0)]
+        (x, y) = posRei
+    in all (\posFinal -> not (isMovimentoSeguro jogo posRei posFinal)) posicoesAoRedor
+
+isCheckMate :: Jogo -> Bool
+isCheckMate jogo =
+    let corRei = getTurno jogo
+        reiEmCheck = isReiInCheck jogo corRei
+        reifogado = isReiAfogado jogo
+    in reiEmCheck && reifogado
+
+
+
+
+
+
+
+--func/loop_jogo

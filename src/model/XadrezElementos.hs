@@ -98,6 +98,8 @@ getBoolRetorno :: Retorno -> Bool
 getBoolRetorno (Retorno b r) = b 
 
 instance Semigroup Retorno where 
+    (Retorno bool _) <> (Retorno bool2 PecaNaoEncontrada) = Retorno False PecaNaoEncontrada
+    (Retorno bool PecaNaoEncontrada) <> (Retorno bool2 _) = Retorno False PecaNaoEncontrada
     (Retorno bool MovimentoForaTurno) <> (Retorno bool2 _) = Retorno False MovimentoForaTurno
     (Retorno bool _) <> (Retorno bool2 MovimentoForaTurno) = Retorno False MovimentoForaTurno
     (Retorno bool MovimentoForaTabuleiro) <> (Retorno bool2 _) = Retorno False MovimentoForaTabuleiro
