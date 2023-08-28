@@ -9,21 +9,29 @@ data Cor = Branco | Preto
 
 type Posicao = (Int, Int)
 
-data ResultadoJogada = MovimentoValido | CapturaValida | ProprioReiCheck | ReiEmCheck | ProprioTime | CaminhoBarrado | MovimentoInvalidoPeca
-
+data ResultadoJogada = MovimentoValido | CapturaValida | ProprioReiCheck | ReiEmCheck | ProprioTime | CaminhoBarrado |
+     MovimentoInvalidoPeca | MovimentoForaTurno | MovimentoForaTabuleiro | PecaNaoEncontrada | PrimeiroMovimento | 
+     CheckMate | ReiAfogado | Empate
+    deriving Eq
 instance Show ResultadoJogada where
-    show ProprioReiCheck = "Movimento Inválido. Esse movimento coloca o seu Rei em Check"
+    show MovimentoValido  = "Movimento realizado"
+    show ProprioReiCheck = "Movimento Inválido. Seu rei esta em cheque, ou esse movimento o coloca em Check"
     show ReiEmCheck = "Movimento Inválido. Seu rei esta em check, movimento o rei ou tome a peça que esta atacando-o"
     show ProprioTime = "Movimento Inválido. Esse movimento captura uma peça do seu proprio time"
     show CaminhoBarrado = "Movimento Inválido. Há uma peça bloqueando o caminho para esse movimento"
     show MovimentoInvalidoPeca = "Movimento invalido. Essa peça não se move dessa forma"
-
+    show MovimentoForaTurno = "Movimento invalido. Não é a sua vez de jogar"
+    show MovimentoForaTabuleiro = "Movimento invalido. Esse movimento ultrapassa os limites (fisicos) do tabuleiro"
+    show PecaNaoEncontrada = "Movimento invalido. Não há peça alguma na posição inicial passada"
+    show PrimeiroMovimento = "O jogo irá começar"
+    show CheckMate = "Check Mate! Fim de jogo."
+    show ReiAfogado = "Rei afogado! Fim de jogo."
+    show Empate = "Empate! Fim de jogo."
 
 
 -- ELEMENTOS JOGO ----------------------------
 
 -------- Peca
-
 data Peca =  Peca TipoPeca Cor
 
 instance Show Peca where
@@ -66,29 +74,57 @@ getPecaCasa (Ocupada peca _) = Just peca
 -------- Tabuleiro
 type Tabuleiro = [[Casa]]
 
+
 showTabuleiro :: Tabuleiro -> String
-showTabuleiro tabuleiro =  "  0  1  2  3  4  5  6  7\n" ++ (unlines . map (concatMap show)) tabuleiro
-    --(show "0  1  2  3  4  5  6  7\n") ++ (unlines . map (concatMap show))
--- showTabuleiro tabuleiro = unlines $ colNumbers : separator : (zipWith (\i row -> show i ++ " |" ++ concatMap show row) [1..] tabLines)
---   where
---     colNumbers = "    " ++ concatMap (\i -> " " ++ show i ++ " ") [1..8]
---     separator = "   " ++ replicate 33 '-'
---     tabLines = map (\(i, row) -> show i ++ " |" ++ row) $ zip [8,7..1] (map (concatMap show) tabuleiro)
+showTabuleiro tabuleiro =
+    let 
+        rowsWithNumbers = zipWith (\n row -> show (7 - n) ++ concatMap show row) [0..7] tabuleiro
+    in "  0  1  2  3  4  5  6  7\n" ++ unlines rowsWithNumbers
 
 -------- Jogo
-data Jogo = Jogo Cor Tabuleiro 
+data Jogo = Jogo Cor Tabuleiro ResultadoJogada
 --ResultadoJogada
 
 getTurno :: Jogo -> Cor
-getTurno (Jogo turno _ ) = turno
+getTurno (Jogo turno _ _) = turno
 
 getTabuleiro :: Jogo -> Tabuleiro
-getTabuleiro (Jogo _ tabuleiro ) = tabuleiro
+getTabuleiro (Jogo _ tabuleiro _ ) = tabuleiro
 
--- getResultadoUltimaJogada :: Jogo -> ResultadoJogada
--- getResultadoUltimaJogada (Jogo _ _ resultado) = resultado
+getResultadoUltimaJogada :: Jogo -> ResultadoJogada
+getResultadoUltimaJogada (Jogo _ _ resultado) = resultado
 
 instance Show Jogo where
-    show (Jogo Branco tabuleiro ) = "Brancas jogam \n\n" ++ showTabuleiro tabuleiro ++ "\n\n " -- ++ show resultadoUltimaJogada 
-    show (Jogo Preto tabuleiro) = "Pretas jogam \n\n" ++ showTabuleiro tabuleiro  ++ "\n\n " -- ++ show resultadoUltimaJogada
+    show (Jogo Branco tabuleiro resultadoUltimaJogada) = "Brancas jogam \n\n" ++ showTabuleiro tabuleiro ++ "\n"  ++ show resultadoUltimaJogada ++ "\n" 
+    show (Jogo Preto tabuleiro resultadoUltimaJogada ) = "Pretas jogam \n\n" ++ showTabuleiro tabuleiro  ++ "\n"  ++ show resultadoUltimaJogada ++ "\n"
 
+data Retorno = Retorno Bool ResultadoJogada
+    deriving Show
+
+getResultadoJogada :: Retorno -> ResultadoJogada
+getResultadoJogada (Retorno b r) = r
+
+getBoolRetorno :: Retorno -> Bool
+getBoolRetorno (Retorno b r) = b 
+
+instance Semigroup Retorno where 
+    (Retorno bool MovimentoForaTabuleiro) <> _ =                            Retorno False MovimentoForaTabuleiro
+    (Retorno bool MovimentoValido) <> (Retorno b MovimentoForaTabuleiro) =  Retorno False MovimentoForaTabuleiro
+    (Retorno bool PecaNaoEncontrada) <> _ =                                 Retorno False PecaNaoEncontrada
+    (Retorno bool MovimentoValido) <> (Retorno b PecaNaoEncontrada) =       Retorno False PecaNaoEncontrada
+    (Retorno bool MovimentoValido) <> (Retorno b MovimentoForaTurno) =      Retorno False MovimentoForaTurno
+    (Retorno bool MovimentoForaTurno) <>  _ =                               Retorno False MovimentoForaTurno
+    (Retorno bool MovimentoValido) <> (Retorno b ProprioTime) =             Retorno False ProprioTime
+    (Retorno bool ProprioTime) <> _ =                                       Retorno False ProprioTime
+    (Retorno bool MovimentoValido) <> (Retorno b MovimentoInvalidoPeca) =   Retorno False MovimentoInvalidoPeca
+    (Retorno bool MovimentoInvalidoPeca) <> _ =                             Retorno False MovimentoInvalidoPeca
+    (Retorno bool MovimentoValido) <> (Retorno b CaminhoBarrado) =          Retorno False CaminhoBarrado
+    (Retorno b CaminhoBarrado) <> _ =                                       Retorno False CaminhoBarrado
+    (Retorno bool MovimentoValido) <> (Retorno b ProprioReiCheck) =         Retorno False ProprioReiCheck
+    (Retorno bool ProprioReiCheck) <> _ =                                   Retorno False ProprioReiCheck
+    (Retorno b1 MovimentoValido) <> (Retorno b2 MovimentoValido) =          Retorno True MovimentoValido
+    
+
+instance Monoid Retorno where
+    mempty = Retorno True MovimentoValido
+    mappend = (<>)

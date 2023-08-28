@@ -1,50 +1,69 @@
 module Main (main) where
 
 import XadrezElementos
-import XadrezPartida
-import Movimentacao
+import XadrezPartida 
+import IAXadrez
+import System.IO
 
 parserPosicao :: Posicao -> Posicao
 parserPosicao (x, y) = (x, 7-y)
 
--- loopJogo:: Jogo -> IO ()
--- loopJogo jogo = do 
+readDigito :: IO Int
+readDigito = do
+    input <- getLine
+    let x = head input
+    return (read [x])
 
+readPosition :: IO Posicao
+readPosition = do
+    input <- getLine
+    let [x, y] = words input
+    return (read x, read y)
 
 main :: IO ()
 main = do
-  putStrLn "hello world, Jogo xadrez\n"
-  let jogo = iniciaJogo 
-  print(jogo)
-  let novoJogo =jogada jogo (parserPosicao(0,1)) (parserPosicao(0,3))
-  print(novoJogo)
-  let novoJogo2 =jogada novoJogo (parserPosicao(1,6)) (parserPosicao(1,4))
-  print(novoJogo2)
-  let novoJogo3 =jogada novoJogo2 (parserPosicao(0,3)) (parserPosicao(1,4))
-  print(novoJogo3)
-  let novoJogo4 =jogada novoJogo3 (parserPosicao(1,7)) (parserPosicao(2,5))
-  print(novoJogo4)
-  -- -- print $ pegaPeca (getTabuleiro  jogo) $ parserPosicao (0,0)
-  -- print $ isMovimentoPeaoValid o (getTabuleiro jogo) (parserPosicao(0,1)) (parserPosicao(0,1))
-  -- print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(0,1)) (parserPosicao(0,2))
-  -- print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(0,1)) (parserPosicao(0,3))
-  -- print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(3,1)) (parserPosicao(0,2))
-  -- print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(0,1)) (parserPosicao(0,0))
-  -- print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(3,3)) (parserPosicao(3,4))
-  -- print $ isMovimentoPeaoValido (getTabuleiro jogo) (parserPosicao(3,3)) (parserPosicao(3,5))
-  -- print $ (parserPosicao(3,3)) 
-  -- print $ (parserPosicao(3,4))  
-  -- putStrLn "Teste fora do tabuleiro"
-  -- print $ movimentoForaTabuleiro (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(3,5))
-  -- print $ movimentoForaTabuleiro (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(3,9))
-  -- print $ movimentoForaTabuleiro (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(-2,5))
-  -- print $ movimentoForaTabuleiro (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(8,2))
-  -- putStrLn "Teste Captura Propria Peca"
-  -- print $ capturaPropriaPeca (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(1,1))
-  -- print $ capturaPropriaPeca (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(6,1))
-  -- print $ capturaPropriaPeca (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(6,3))
-  -- print $ capturaPropriaPeca (getTabuleiro jogo) (parserPosicao(1,1)) (parserPosicao(3,5))
-  -- -- print $ pegaPeca (getTabuleiro jogo) $ parserPosicao  (0,0)
-  -- print $ isReiInCheck jogo Branco 
- 
+
+  hSetBuffering stdout NoBuffering
+  putStrLn "Bem-vindo ao jogo de xadrez!"
+  putStrLn "Primeiramente vamos escolher qual modo de jogo você quer jogar:"
+  putStrLn "|||| Digite '1' para jogar contra um segundo jogador na mesma máquina, vocês irão digitar seus movimentos alternadamente"
+  putStrLn "|||| Digite '2' para jogar contra uma IA que irá fazer movimentos aleatórios"
+  entrada <- readDigito
+  if entrada == 1 then loop iniciaJogo else loopIA iniciaJogo
+
+
+loopIA :: Jogo -> IO()
+loopIA jogo = do
+      putStrLn $ show jogo
+      case jogoTerminou jogo of
+        True ->  putStrLn "Obrigado por jogar"
+        False -> do 
+            putStrLn "Informe a posição da peça que deseja mover (x y):"
+            posI <- readPosition
+            putStrLn "Informe a posição para onde deseja mover a peça (x y):"
+            posF <- readPosition
+            let jogoIA = jogada jogo (parserPosicao posI) (parserPosicao posF)
+            if (getTurno jogoIA) == Preto
+              then do
+                  putStrLn $ show jogoIA
+                  let (posInicioIA, posFinalIA) = getJogadaAleatoria jogoIA (getTurno jogoIA)
+                  putStrLn "A jogada da IA foi"
+                  putStrLn $ show  (parserPosicao posInicioIA, parserPosicao posFinalIA)
+                  loopIA $ jogada jogoIA posInicioIA posFinalIA
+              else loopIA jogoIA
+           
+
+loop :: Jogo -> IO ()
+loop jogo = do
+    putStrLn $ show jogo
+    case jogoTerminou jogo of
+      True -> putStrLn "Obrigado por jogar"
+      False -> do 
+          putStrLn "Informe a posição da peça que deseja mover (x y):"
+          posI <- readPosition
+          putStrLn "Informe a posição para onde deseja mover a peça (x y):"
+          posF <- readPosition
+          loop $ jogada jogo (parserPosicao posI) (parserPosicao posF)
+        
+
 
