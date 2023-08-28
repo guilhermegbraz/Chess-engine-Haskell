@@ -13,7 +13,7 @@ data ResultadoJogada = MovimentoValido | CapturaValida | ProprioReiCheck | ReiEm
 
 instance Show ResultadoJogada where
     show MovimentoValido  = "Movimento realizado"
-    show ProprioReiCheck = "Movimento Inválido. Esse movimento coloca o seu Rei em Check"
+    show ProprioReiCheck = "Movimento Inválido. Seu rei esta em cheque, ou esse movimento o coloca em Check"
     show ReiEmCheck = "Movimento Inválido. Seu rei esta em check, movimento o rei ou tome a peça que esta atacando-o"
     show ProprioTime = "Movimento Inválido. Esse movimento captura uma peça do seu proprio time"
     show CaminhoBarrado = "Movimento Inválido. Há uma peça bloqueando o caminho para esse movimento"
@@ -104,19 +104,21 @@ getBoolRetorno :: Retorno -> Bool
 getBoolRetorno (Retorno b r) = b 
 
 instance Semigroup Retorno where 
-    (Retorno bool MovimentoValido) <> (Retorno b MovimentoForaTurno) = Retorno False MovimentoForaTurno
-    (Retorno bool MovimentoForaTurno) <>  _ = Retorno False MovimentoForaTurno
-    (Retorno bool MovimentoForaTabuleiro) <> _ = Retorno False MovimentoForaTabuleiro
-    (Retorno bool MovimentoValido) <> (Retorno b MovimentoForaTabuleiro) = Retorno False MovimentoForaTabuleiro
-    (Retorno bool MovimentoValido) <> (Retorno b ProprioTime) = Retorno False ProprioTime
-    (Retorno bool ProprioTime) <> _ = Retorno False ProprioTime
-    (Retorno bool MovimentoValido) <> (Retorno b MovimentoInvalidoPeca) = Retorno False MovimentoInvalidoPeca
-    (Retorno bool MovimentoInvalidoPeca) <> _ = Retorno False MovimentoInvalidoPeca
-    (Retorno bool MovimentoValido) <> (Retorno b CaminhoBarrado) = Retorno False CaminhoBarrado
-    (Retorno b CaminhoBarrado) <> _ = Retorno False CaminhoBarrado
-    (Retorno bool MovimentoValido) <> (Retorno b ProprioReiCheck) = Retorno False ProprioReiCheck
-    (Retorno bool ProprioReiCheck) <> _ = Retorno False ProprioReiCheck
-    (Retorno b1 MovimentoValido) <> (Retorno b2 MovimentoValido) = Retorno True MovimentoValido
+    (Retorno bool MovimentoForaTabuleiro) <> _ =                            Retorno False MovimentoForaTabuleiro
+    (Retorno bool MovimentoValido) <> (Retorno b MovimentoForaTabuleiro) =  Retorno False MovimentoForaTabuleiro
+    (Retorno bool PecaNaoEncontrada) <> _ =                                 Retorno False PecaNaoEncontrada
+    (Retorno bool MovimentoValido) <> (Retorno b PecaNaoEncontrada) =       Retorno False PecaNaoEncontrada
+    (Retorno bool MovimentoValido) <> (Retorno b MovimentoForaTurno) =      Retorno False MovimentoForaTurno
+    (Retorno bool MovimentoForaTurno) <>  _ =                               Retorno False MovimentoForaTurno
+    (Retorno bool MovimentoValido) <> (Retorno b ProprioTime) =             Retorno False ProprioTime
+    (Retorno bool ProprioTime) <> _ =                                       Retorno False ProprioTime
+    (Retorno bool MovimentoValido) <> (Retorno b MovimentoInvalidoPeca) =   Retorno False MovimentoInvalidoPeca
+    (Retorno bool MovimentoInvalidoPeca) <> _ =                             Retorno False MovimentoInvalidoPeca
+    (Retorno bool MovimentoValido) <> (Retorno b CaminhoBarrado) =          Retorno False CaminhoBarrado
+    (Retorno b CaminhoBarrado) <> _ =                                       Retorno False CaminhoBarrado
+    (Retorno bool MovimentoValido) <> (Retorno b ProprioReiCheck) =         Retorno False ProprioReiCheck
+    (Retorno bool ProprioReiCheck) <> _ =                                   Retorno False ProprioReiCheck
+    (Retorno b1 MovimentoValido) <> (Retorno b2 MovimentoValido) =          Retorno True MovimentoValido
     
 
 instance Monoid Retorno where
