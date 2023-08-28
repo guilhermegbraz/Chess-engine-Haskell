@@ -2,6 +2,7 @@ module Main (main) where
 
 import XadrezElementos
 import XadrezPartida 
+import IAXadrez
 import System.IO
 
 parserPosicao :: Posicao -> Posicao
@@ -15,21 +16,43 @@ main :: IO ()
 main = do
   let jogo = iniciaJogo 
   let possiveisJogadas = todasJogadasPossiveis jogo Branco
-  -- print jogo
-  -- print $ gerarCaminho (parserPosicao (2,0)) (parserPosicao (0,2))
-  -- print $ caminhoLivre (getTabuleiro jogo) (parserPosicao (2,0)) (parserPosicao (0,2))
-  -- print $ possiveisJogadas
-  -- print $ length possiveisJogadas
+  print possiveisJogadas
+  let jogo2 = jogada jogo (4,6) (4,4)
+  print $ jogo2
+  print "Jogadas possiveis pretas"
+  print $ todasJogadasPossiveis jogo2 Preto
+  print $ length $ todasJogadasPossiveis jogo2 Preto
   hSetBuffering stdout NoBuffering
   putStrLn "Bem-vindo ao jogo de xadrez!"
-  loop (jogoQuaseAfoado)
+  putStrLn "Primeiramente vamos escolher qual modo de jogo você quer jogar:"
+  putStrLn "|||| Digite '1' para jogar contra um segundo jogador na mesma máquina, vocês irão digitar seus movimentos alternadamente"
+  putStrLn "|||| Digite '2' para jogar contra uma IA que irá fazer movimentos aleatórios"
+  entrada <- readDigito
+  if entrada == 1 then loop iniciaJogo else loopIA iniciaJogo
 
+
+loopIA :: Jogo -> IO()
+loopIA jogo = do
+      putStrLn $ show jogo
+      case jogoTerminou jogo of
+        True ->  putStrLn "Obrigado por jogar"
+        False -> do 
+            putStrLn "Informe a posição da peça que deseja mover (x y):"
+            posI <- readPosition
+            putStrLn "Informe a posição para onde deseja mover a peça (x y):"
+            posF <- readPosition
+            let jogoIA = jogada jogo (parserPosicao posI) (parserPosicao posF)
+            putStrLn $ show jogoIA
+            let (posInicioIA, posFinalIA) = getJogadaAleatoria jogoIA (getTurno jogoIA)
+            putStrLn "A jogada sorteada foi"
+            putStrLn $ show (posInicioIA, posFinalIA)
+            loopIA $ jogada jogoIA posInicioIA posFinalIA
 
 loop :: Jogo -> IO ()
 loop jogo = do
     putStrLn $ show jogo
     case jogoTerminou jogo of
-      True -> do putStrLn "Obrigado por jogar"
+      True -> putStrLn "Obrigado por jogar"
       False -> do 
           putStrLn "Informe a posição da peça que deseja mover (x y):"
           posI <- readPosition
@@ -37,6 +60,11 @@ loop jogo = do
           posF <- readPosition
           loop $ jogada jogo (parserPosicao posI) (parserPosicao posF)
         
+readDigito :: IO Int
+readDigito = do
+    input <- getLine
+    let x = head input
+    return (read [x])
 
 readPosition :: IO Posicao
 readPosition = do

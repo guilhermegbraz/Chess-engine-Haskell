@@ -164,7 +164,7 @@ isMovimentoPeaoValido tabuleiro (x0, y0) (xf, yf) =
                         else (y0 - yf == 1 && (x0 - xf) == 0) || movPeaoCaptura Branco
                 Preto ->
                     if y0 == 1
-                        then (yf - y0 == 1 || yf - y0 == 2 && (x0 - xf) == 0) || movPeaoCaptura Preto
+                        then ((yf - y0 == 1 || yf - y0 == 2) && (x0 - xf) == 0) || movPeaoCaptura Preto
                         else (yf - y0 == 1 && (x0 - xf) == 0) || movPeaoCaptura Preto
                 where
                     movPeaoCaptura Branco = (y0 - yf == 1) && (abs(x0 - xf) == 1) && pecaOutraCor Branco
