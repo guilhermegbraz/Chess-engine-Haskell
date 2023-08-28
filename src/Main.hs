@@ -43,11 +43,15 @@ loopIA jogo = do
             putStrLn "Informe a posição para onde deseja mover a peça (x y):"
             posF <- readPosition
             let jogoIA = jogada jogo (parserPosicao posI) (parserPosicao posF)
-            putStrLn $ show jogoIA
-            let (posInicioIA, posFinalIA) = getJogadaAleatoria jogoIA (getTurno jogoIA)
-            putStrLn "A jogada sorteada foi"
-            putStrLn $ show (posInicioIA, posFinalIA)
-            loopIA $ jogada jogoIA posInicioIA posFinalIA
+            if (getTurno jogoIA) == Preto
+              then do
+                  putStrLn $ show jogoIA
+                  let (posInicioIA, posFinalIA) = getJogadaAleatoria jogoIA (getTurno jogoIA)
+                  putStrLn "A jogada da IA foi"
+                  putStrLn $ show  (parserPosicao posInicioIA, parserPosicao posFinalIA)
+                  loopIA $ jogada jogoIA posInicioIA posFinalIA
+              else loopIA jogoIA
+           
 
 loop :: Jogo -> IO ()
 loop jogo = do
