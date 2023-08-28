@@ -8,20 +8,21 @@ import System.IO
 parserPosicao :: Posicao -> Posicao
 parserPosicao (x, y) = (x, 7-y)
 
+readDigito :: IO Int
+readDigito = do
+    input <- getLine
+    let x = head input
+    return (read [x])
 
-isEntradaInvalida:: Posicao -> Posicao -> Bool 
-isEntradaInvalida (x0, y0) (xf, yf) = maximum [x0, y0, xf, yf] > 7 || minimum [x0, y0, xf, yf] < 0
+readPosition :: IO Posicao
+readPosition = do
+    input <- getLine
+    let [x, y] = words input
+    return (read x, read y)
 
 main :: IO ()
 main = do
-  let jogo = iniciaJogo 
-  let possiveisJogadas = todasJogadasPossiveis jogo Branco
-  print possiveisJogadas
-  let jogo2 = jogada jogo (4,6) (4,4)
-  print $ jogo2
-  print "Jogadas possiveis pretas"
-  print $ todasJogadasPossiveis jogo2 Preto
-  print $ length $ todasJogadasPossiveis jogo2 Preto
+
   hSetBuffering stdout NoBuffering
   putStrLn "Bem-vindo ao jogo de xadrez!"
   putStrLn "Primeiramente vamos escolher qual modo de jogo você quer jogar:"
@@ -60,15 +61,5 @@ loop jogo = do
           posF <- readPosition
           loop $ jogada jogo (parserPosicao posI) (parserPosicao posF)
         
-readDigito :: IO Int
-readDigito = do
-    input <- getLine
-    let x = head input
-    return (read [x])
 
-readPosition :: IO Posicao
-readPosition = do
-    input <- getLine
-    let [x, y] = words input
-    return (read x, read y)
 
