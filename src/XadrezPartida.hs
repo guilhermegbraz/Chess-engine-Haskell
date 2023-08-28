@@ -18,6 +18,30 @@ isEmpate jogo = length posicoesTime1 == length posicoesTime2 && length posicoesT
         posicoesTime1 = todasPosicoesAdversarios (getTabuleiro jogo) Branco
         posicoesTime2 = todasPosicoesAdversarios (getTabuleiro jogo) Preto
 
+verificaFimOuCheck :: Jogo -> Jogo
+verificaFimOuCheck jogo = 
+    if jogoTerminou jogo 
+        then 
+            if isCheckMate jogo 
+                then Jogo (getTurno jogo) (getTabuleiro jogo) CheckMate
+                else if isReiAfogado jogo 
+                    then Jogo (getTurno jogo) (getTabuleiro jogo) ReiAfogado 
+                    else Jogo (getTurno jogo) (getTabuleiro jogo) Empate
+
+        else if isReiInCheck jogo (getTurno jogo)
+            then Jogo (getTurno jogo) (getTabuleiro jogo) ReiEmCheck
+            else jogo
+
+jogada :: Jogo -> Posicao -> Posicao -> Jogo
+jogada jogo posI posF =
+    if retornoMovValido 
+        then verificaFimOuCheck novaPosicao 
+        else Jogo (getTurno jogo) (getTabuleiro jogo) retornoResultado
+    where
+        (Retorno retornoMovValido retornoResultado) = isMovimentoValido jogo posI posF
+        novaPosicao = Jogo (trocarTurno (getTurno jogo)) (realizarMovimento jogo posI posF) retornoResultado
+
+
 isReiAfogado :: Jogo -> Bool
 isReiAfogado jogo = semFulga && (length $ todasJogadasPossiveis jogo (getTurno jogo)) == 0
     where
@@ -119,18 +143,6 @@ isReiInCheck jogo corRei = any (\pos -> getBoolRetorno(movimentoValidoPeca jogo 
     where
         posicoesAdversarios = todasPosicoesAdversarios (getTabuleiro jogo) corRei
         posRei = encontrarPosicaoRei (getTabuleiro jogo) corRei
-
-jogada :: Jogo -> Posicao -> Posicao -> Jogo
-jogada jogo posI posF =
-    if retornoBool 
-        then 
-            if False
-                then Jogo (getTurno novaPosicao) (getTabuleiro novaPosicao) CheckMate
-                else novaPosicao
-        else Jogo (getTurno jogo) (getTabuleiro jogo) retornoResultado
-    where
-        (Retorno retornoBool retornoResultado) = isMovimentoValido jogo posI posF
-        novaPosicao = Jogo (trocarTurno (getTurno jogo)) (realizarMovimento jogo posI posF) retornoResultado
 
 
 realizarMovimento :: Jogo -> Posicao -> Posicao -> Tabuleiro
