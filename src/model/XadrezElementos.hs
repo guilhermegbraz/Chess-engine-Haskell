@@ -9,8 +9,10 @@ data Cor = Branco | Preto
 
 type Posicao = (Int, Int)
 
-data ResultadoJogada = MovimentoValido | CapturaValida | ProprioReiCheck | ReiEmCheck | ProprioTime | CaminhoBarrado | MovimentoInvalidoPeca | MovimentoForaTurno | MovimentoForaTabuleiro | PecaNaoEncontrada | PrimeiroMovimento | CheckMate
-
+data ResultadoJogada = MovimentoValido | CapturaValida | ProprioReiCheck | ReiEmCheck | ProprioTime | CaminhoBarrado |
+     MovimentoInvalidoPeca | MovimentoForaTurno | MovimentoForaTabuleiro | PecaNaoEncontrada | PrimeiroMovimento | 
+     CheckMate | ReiAfogado | Empate
+    deriving Eq
 instance Show ResultadoJogada where
     show MovimentoValido  = "Movimento realizado"
     show ProprioReiCheck = "Movimento Inválido. Seu rei esta em cheque, ou esse movimento o coloca em Check"
@@ -23,6 +25,8 @@ instance Show ResultadoJogada where
     show PecaNaoEncontrada = "Movimento invalido. Não há peça alguma na posição inicial passada"
     show PrimeiroMovimento = "O jogo irá começar"
     show CheckMate = "Check Mate! Fim de jogo."
+    show ReiAfogado = "Rei afogado! Fim de jogo."
+    show Empate = "Empate! Fim de jogo."
 
 
 -- ELEMENTOS JOGO ----------------------------
@@ -70,12 +74,12 @@ getPecaCasa (Ocupada peca _) = Just peca
 -------- Tabuleiro
 type Tabuleiro = [[Casa]]
 
+
 showTabuleiro :: Tabuleiro -> String
 showTabuleiro tabuleiro =
-    let verticalNumbers = "76543210\n"
-        rowsWithNumbers = zipWith (\n row -> show n ++ concatMap show row) [0..7] tabuleiro
+    let 
+        rowsWithNumbers = zipWith (\n row -> show (7 - n) ++ concatMap show row) [0..7] tabuleiro
     in "  0  1  2  3  4  5  6  7\n" ++ unlines rowsWithNumbers
-
 
 -------- Jogo
 data Jogo = Jogo Cor Tabuleiro ResultadoJogada
