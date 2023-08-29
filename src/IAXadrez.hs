@@ -1,4 +1,6 @@
-module IAXadrez where
+module IAXadrez (
+    getJogadaAleatoria
+) where
 
 import System.Random
 import XadrezPartida
