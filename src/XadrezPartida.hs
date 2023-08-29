@@ -1,4 +1,9 @@
-module XadrezPartida where
+module XadrezPartida (
+    iniciaJogo,
+    jogada,
+    jogoTerminou,
+    todasJogadasPossiveis
+) where
 
 import XadrezElementos
 
@@ -64,12 +69,10 @@ gerarCaminho (x1, y1) (x2, y2)
     | y1 == y2 = removeExtremos $ [(x, y1) | x <- [x1, x1 + stepX .. x2]]
     | otherwise = reverse $ tail $ reverse $ zip [x1 + stepX, x1 + 2*stepX .. x2] [y1 + stepY, y1 + 2*stepY .. y2]
             where
-                deltaX = abs (x2 - x1)
-                deltaY = abs (y2 - y1)
                 stepX = if x2 > x1 then 1 else -1
                 stepY = if y2 > y1 then 1 else -1
                 removeExtremos [] = []
-                removeExtremos (x:xs) =  reverse $ tail $ reverse xs
+                removeExtremos (_:xs) =  reverse $ tail $ reverse xs
 
 
 encontrarPosicaoRei :: Tabuleiro -> Cor -> Posicao
@@ -141,8 +144,8 @@ caminhoLivre tabuleiro (xi, yi) (xf, yf)  = verificaVazia $ caminhos
                 then (xf, yf) : gerarCaminho (xi, yi) (xf, yf) 
                 else gerarCaminho (xi, yi) (xf, yf)
             _ ->  gerarCaminho (xi, yi) (xf, yf)
-        verificaVazia xs = all isCasaVazia xs
         verificaVazia [] = True
+        verificaVazia xs = all isCasaVazia xs
         isCasaVazia (x, y) = case pegaPeca tabuleiro (x, y) of
             Just _ -> False
             Nothing -> True
@@ -185,7 +188,7 @@ isMovimentoPeaoValido tabuleiro (x0, y0) (xf, yf) =
                     movPeaoCaptura Branco = (y0 - yf == 1) && (abs(x0 - xf) == 1) && pecaOutraCor Branco
                     movPeaoCaptura Preto = (yf - y0 == 1) && (abs(x0 - xf) == 1) && pecaOutraCor Preto
                     pecaOutraCor cor = case pegaPeca tabuleiro (xf, yf) of
-                        Just (Peca t corPeca) -> cor /= corPeca
+                        Just (Peca _ corPeca) -> cor /= corPeca
                         Nothing -> False
                         
         Nothing -> False
@@ -241,14 +244,14 @@ capturaPropriaPeca tabuleiro (x0, y0) (xf, yf) =
         _ -> False
 
 movimentoForaTabuleiro :: Tabuleiro -> Posicao -> Posicao -> Bool
-movimentoForaTabuleiro tabuleiro (x0, y0) (xf, yf) = x0 > 7 || x0 < 0 
+movimentoForaTabuleiro _ (x0, y0) (xf, yf) = x0 > 7 || x0 < 0 
     || xf > 7 || xf < 0 || y0 > 7 || y0 < 0 || yf > 7 || yf < 0
 
 
 isTurnoCorreto :: Jogo -> Posicao -> Posicao -> Bool
-isTurnoCorreto jogo posI posF = 
+isTurnoCorreto jogo posI _ = 
     case pegaPeca (getTabuleiro jogo) posI of
-        Just (Peca tipo corPeca) -> corPeca == getTurno jogo
+        Just (Peca _ corPeca) -> corPeca == getTurno jogo
         _ -> False
 
 isMovimentoSeguro :: Jogo -> Posicao -> Posicao -> Bool
@@ -286,7 +289,7 @@ isMovimentoValido jogo posI posF = mconcat [vForaTabuleiro, vPeca, vTurno,
 ---------------------- REALIZA O MOVIMENTO NO TABULEIRO -------------------------------------------------
 
 realizarMovimento :: Jogo -> Posicao -> Posicao -> Tabuleiro
-realizarMovimento jogo@(Jogo turno tabuleiro _) (x0, y0) (xf, yf) =
+realizarMovimento jogo@(Jogo _ tabuleiro _) (x0, y0) (xf, yf) =
     case pegaPeca tabuleiro (x0, y0) of
         Just peca -> atualizarTabuleiro tabuleiro (x0, y0) (Empty (x0, 7-y0)) (xf, yf) (Ocupada peca (xf, 7-yf))
         Nothing -> getTabuleiro jogo
